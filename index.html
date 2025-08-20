@@ -401,7 +401,6 @@ async function buildTable(){
       <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
       <td>—</td><td>—</td><td>—</td><td>—</td>
     `;
-    tr.setAttribute(\"data-symbol\", symbol);
     tbody.appendChild(tr);
     rows.set(symbol, tr);
   }
@@ -504,7 +503,6 @@ async function fillRow(tr, symbol, interval){
       <td>${golden}</td>
       <td>${rally}</td>
     `;
-    tr.setAttribute(\"data-symbol\", symbol);
   }catch(err){
     tr.innerHTML = `
       <td class="nowrap stk c1">${symbol}</td>
@@ -513,7 +511,6 @@ async function fillRow(tr, symbol, interval){
       <td class="stk c4">—</td>
       <td class="stk c5">—</td>
       <td colspan="19" class="negative" style="text-align:start">⚠️ خطا در دریافت داده برای ${symbol}: ${(err && err.message) ? err.message : err}</td>`;
-    tr.setAttribute(\"data-symbol\", symbol);
   }
 }
 
