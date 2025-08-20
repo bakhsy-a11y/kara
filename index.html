@@ -3,34 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📊 Crypto Dashboard – Top 20 (Plus)</title>
+  <title>📊 Crypto Dashboard – Final (Merged)</title>
   <style>
     :root{ --hdr-h:64px; --th-h:44px; --sticky-bg:#f8fbff; }
     *{box-sizing:border-box}
     body{font-family:tahoma,Arial,sans-serif;direction:rtl;background:#f5f7fb;margin:0}
     /* Fixed site header */
-    header{position:fixed;top:0;left:0;right:0;background:#1e88e5;color:#fff;z-index:30}
+    header{position:fixed;top:0;left:0;right:0;background:#1e88e5;color:#fff;z-index:40}
     header .hwrap{max-width:1500px;margin:0 auto;padding:10px 12px}
     header h2{margin:.2rem 0 .1rem 0;font-weight:700}
     header .sub{font-size:12px;opacity:.9}
     /* Page wrapper offset for fixed header */
     .wrap{max-width:1500px;margin:calc(var(--hdr-h) + 12px) auto 16px auto;padding:0 12px}
     .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-    input,select,button{padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;font-family:inherit}
+    input[type="text"],select,button{padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;font-family:inherit}
     button{background:#1e88e5;color:#fff;cursor:pointer}
+    button.ghost{background:#fff;color:#1e88e5;border-color:#90caf9}
     button:disabled{background:#90caf9;cursor:not-allowed}
     .note{font-size:12px;color:#546e7a;margin-top:6px}
     /* Responsive table container */
     .table-wrap{overflow:auto;background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
     table{border-collapse:collapse;width:100%;table-layout:fixed}
-    col.symbol{width:110px}
+    col.symbol{width:120px}
     col.price{width:120px}
     col.rsi{width:90px}
     col.ema9{width:110px}
     col.ema20{width:110px}
     th,td{border-bottom:1px solid #eee;padding:8px 10px;text-align:center;white-space:nowrap;font-size:13px}
     /* Sticky table header (below the fixed site header) */
-    thead th{background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:20;height:var(--th-h)}
+    thead th{background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:30;height:var(--th-h)}
     /* Zebra rows for readability */
     tbody tr:nth-child(even){background:#fafcff}
     tr:hover{background:#f3f8ff}
@@ -48,40 +49,40 @@
     .rsi-low{color:#2e7d32;font-weight:700}   /* <=30 */
     /* Sticky first five columns */
     td, th{background-clip:padding-box}
-    th.stk, td.stk{position:sticky;z-index:10;background:#fff}
+    th.stk, td.stk{position:sticky;z-index:15;background:#fff}
     thead th.stk{background:#e3f2fd}
-    th.c1,td.c1{left:0;z-index:12}
-    th.c2,td.c2{left:110px}
-    th.c3,td.c3{left:230px}
-    th.c4,td.c4{left:320px}
-    th.c5,td.c5{left:430px}
+    th.c1,td.c1{left:0;z-index:18}
+    th.c2,td.c2{left:120px}
+    th.c3,td.c3{left:240px}
+    th.c4,td.c4{left:330px}
+    th.c5,td.c5{left:440px}
     /* subtle separators for sticky cols */
     th.stk::after, td.stk::after{
       content:"";position:absolute;top:0;bottom:0;left:100%;width:1px;background:#e3eaf3
     }
-    /* Sticky first data row (optional) */
-    tbody tr:first-child{position:sticky;top:calc(var(--hdr-h) + var(--th-h));z-index:5;background:var(--sticky-bg)}
-    tbody tr:first-child td{background:var(--sticky-bg)}
-    /* Tooltip (use native title + helper icon style) */
+    /* Sticky first visible data row (robust with search) */
+    tbody tr.sticky-row{position:sticky;top:calc(var(--hdr-h) + var(--th-h));z-index:10;background:var(--sticky-bg)}
+    tbody tr.sticky-row td{background:var(--sticky-bg)}
+    /* Tooltip helper */
     th .tt{border-bottom:1px dotted #0d47a1;cursor:help}
     /* Compact on small screens */
     @media (max-width:900px){
-      col.symbol{width:92px}
-      col.price{width:105px}
+      col.symbol{width:100px}
+      col.price{width:110px}
       col.rsi{width:80px}
       col.ema9{width:96px}
       col.ema20{width:96px}
-      th.c2,td.c2{left:92px}
-      th.c3,td.c3{left:197px}
-      th.c4,td.c4{left:277px}
-      th.c5,td.c5{left:373px}
+      th.c2,td.c2{left:100px}
+      th.c3,td.c3{left:210px}
+      th.c4,td.c4{left:300px}
+      th.c5,td.c5{left:396px}
     }
   </style>
 </head>
 <body>
   <header>
     <div class="hwrap">
-      <h2>📊 Crypto Dashboard – Top 20 (Plus)</h2>
+      <h2>📊 Crypto Dashboard – Final (Merged)</h2>
       <div class="sub">منبع داده: Binance (OHLCV) از طریق Codetabs Proxy | اندیکاتورها در مرورگر محاسبه می‌شوند</div>
     </div>
   </header>
@@ -89,15 +90,17 @@
   <div class="wrap">
     <div class="controls">
       <label>تایم‌فریم:</label>
-      <select id="interval">
+      <select id="interval" aria-label="interval">
         <option value="5m">5m</option>
         <option value="15m" selected>15m</option>
         <option value="1h">1h</option>
         <option value="4h">4h</option>
         <option value="1d">1d</option>
       </select>
+      <input id="search" type="text" placeholder="جستجوی نماد (مثال: BTC, ETH, ...)" aria-label="search symbol" />
       <button id="refreshBtn">بروزرسانی</button>
       <button id="downloadCSV">دانلود CSV</button>
+      <button id="clearSearch" class="ghost">پاک‌کردن جستجو</button>
       <span id="lastUpdate" class="note"></span>
     </div>
 
@@ -145,7 +148,7 @@
   </div>
 
 <script>
-// ====== Config ======
+// ====== Utils ======
 const SYMBOLS = [
   "BTCUSDT","ETHUSDT","BNBUSDT","XRPUSDT","SOLUSDT",
   "ADAUSDT","DOGEUSDT","TRXUSDT","MATICUSDT","DOTUSDT",
@@ -159,31 +162,44 @@ const withinPct = (price, level, pct=0.3) => {
   const diff = Math.abs((price - level)/level)*100;
   return diff <= pct;
 };
+const sleep = (ms) => new Promise(r=>setTimeout(r,ms));
+
+// Abortable fetch with timeout
+async function fetchJson(url, {timeout=12000}={}){
+  const ctrl = new AbortController();
+  const id = setTimeout(()=>ctrl.abort(), timeout);
+  try{
+    const res = await fetch(url, {signal: ctrl.signal});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 // ====== Data Fetch ======
 async function fetchKlines(symbol, interval="15m", limit=300){
   const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
-  const res = await fetch(url);
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
+  const data = await fetchJson(url);
   if(!Array.isArray(data)) throw new Error("Bad payload");
   return data;
 }
 
 async function fetchDailyPivot(symbol){
-  const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=3`);
-  const res = await fetch(url);
-  if(!res.ok) return null;
-  const data = await res.json();
-  if(!Array.isArray(data) || data.length < 2) return null;
-  const prev = data[data.length-2];
-  const H = +prev[2], L = +prev[3], C = +prev[4];
-  const PP = (H+L+C)/3;
-  return PP;
+  try{
+    const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=3`);
+    const data = await fetchJson(url);
+    if(!Array.isArray(data) || data.length < 2) return null;
+    const prev = data[data.length-2];
+    const H = +prev[2], L = +prev[3], C = +prev[4];
+    const PP = (H+L+C)/3;
+    return PP;
+  }catch(e){ return null; }
 }
 
 // ====== Indicators ======
 function ema(values, period){
+  if(!values?.length) return [];
   const k = 2/(period+1);
   const out = [];
   let prev = values[0];
@@ -197,7 +213,7 @@ function ema(values, period){
 }
 
 function rsi(values, period=14){
-  if(values.length < period+1) return [];
+  if(!values?.length || values.length < period+1) return [];
   let gains=0, losses=0;
   for(let i=1;i<=period;i++){
     const diff = values[i]-values[i-1];
@@ -218,6 +234,7 @@ function rsi(values, period=14){
 }
 
 function macd(values, fast=12, slow=26, signalPeriod=9){
+  if(!values?.length) return {macdLine: [], signalLine: []};
   const ef = ema(values, fast);
   const es = ema(values, slow);
   const macdLine = ef.map((v,i)=>(es[i]==null?null:(v-es[i])));
@@ -229,6 +246,7 @@ function macd(values, fast=12, slow=26, signalPeriod=9){
 }
 
 function atr(highs, lows, closes, period=14){
+  if(!highs?.length || !lows?.length || !closes?.length) return [];
   const trs = [];
   for(let i=0;i<highs.length;i++){
     if(i===0){ trs.push(highs[i]-lows[i]); continue; }
@@ -253,7 +271,7 @@ function downloadCSV(){
   const table = document.getElementById("crypto-table");
   const rows = Array.from(table.querySelectorAll("tr"));
   const data = rows.map(row => Array.from(row.children).map(td => td.innerText.replace(/\s+/g,' ').trim()));
-  const csv = data.map(r => r.map(cell => /[",\n]/.test(cell) ? '"' + cell.replace(/"/g,'""') + '"' : cell).join(",")).join("\n");
+  const csv = "\\ufeff" + data.map(r => r.map(cell => /[\",\\n]/.test(cell) ? '\"' + cell.replace(/\"/g,'\"\"') + '\"' : cell).join(",")).join("\\n");
   const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -265,6 +283,31 @@ function downloadCSV(){
   URL.revokeObjectURL(url);
 }
 
+// ====== Search (robust) ======
+function applySearch(){
+  const q = (document.getElementById("search").value || "").trim().toUpperCase();
+  const tbody = document.querySelector("#crypto-table tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  // Reset sticky-row class
+  rows.forEach(r => r.classList.remove("sticky-row"));
+  if(!q){
+    rows.forEach(r => r.style.display = "");
+  }else{
+    rows.forEach(r => {
+      const sym = (r.getAttribute("data-symbol") || r.children[0]?.textContent || "").toUpperCase();
+      r.style.display = sym.includes(q) ? "" : "none";
+    });
+  }
+  // Set sticky on first visible row
+  const firstVisible = rows.find(r => r.style.display !== "none");
+  if(firstVisible) firstVisible.classList.add("sticky-row");
+}
+
+// Debounce helper
+function debounce(fn, ms=200){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,args),ms); };
+}
+
 // ====== Main Build ======
 async function buildTable(){
   const tbody = document.querySelector("#crypto-table tbody");
@@ -274,6 +317,7 @@ async function buildTable(){
   for(const symbol of SYMBOLS){
     try{
       const [kl, pp] = await Promise.all([fetchKlines(symbol, interval, 300), fetchDailyPivot(symbol)]);
+      if(!Array.isArray(kl) || kl.length === 0) throw new Error("No data");
       const closes = kl.map(k=>+k[4]);
       const highs  = kl.map(k=>+k[2]);
       const lows   = kl.map(k=>+k[3]);
@@ -313,12 +357,12 @@ async function buildTable(){
       // Entry/Exit via ATR
       let entry="-", exitPlan="-";
       if(longCond && atrv){
-        entry   = last.toFixed(4);
+        entry   = last?.toFixed(4);
         const tp= (last + 1.5*atrv).toFixed(4);
         const sl= (last - 1.0*atrv).toFixed(4);
         exitPlan= `TP:${tp} | SL:${sl}`;
       }else if(shortCond && atrv){
-        entry   = last.toFixed(4);
+        entry   = last?.toFixed(4);
         const tp= (last - 1.5*atrv).toFixed(4);
         const sl= (last + 1.0*atrv).toFixed(4);
         exitPlan= `TP:${tp} | SL:${sl}`;
@@ -340,7 +384,7 @@ async function buildTable(){
       const prevRsi = rsiArr.slice(-2)[0];
       const bounce = withinPct(last, support, 0.3) && prevRsi!=null && rsiv>prevRsi ? "✅" : "—";
 
-      // Golden Cross: EMA50 crossed above EMA200 in last 3 bars
+      // Golden Cross: EMA50 crossed above EMA200 in last bar
       const ema50Prev = ema50Arr.at(-2), ema200Prev = ema200Arr.at(-2);
       const golden = (ema50Prev!=null && ema200Prev!=null && ema50Prev<ema200Prev && ema50v>ema200v) ? "✅" : "—";
 
@@ -354,6 +398,7 @@ async function buildTable(){
       const rsiClass = (rsiv!=null) ? (rsiv>=70 ? "rsi-high" : (rsiv<=30 ? "rsi-low" : "")) : "";
 
       const tr = document.createElement("tr");
+      tr.setAttribute("data-symbol", symbol);
       tr.innerHTML = `
         <td class="nowrap stk c1">${symbol}</td>
         <td class="stk c2">${fmt(last,4)}</td>
@@ -383,18 +428,30 @@ async function buildTable(){
       tbody.appendChild(tr);
     }catch(err){
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="24" class="negative">خطا برای ${symbol}: ${err.message}</td>`;
+      tr.innerHTML = `<td colspan="24" class="negative">خطا برای ${symbol}: ${err?.message || err}</td>`;
       tbody.appendChild(tr);
     }
+    // polite pause to reduce rate-limit risk on proxy
+    await sleep(120);
   }
 
   document.getElementById("lastUpdate").textContent =
     "آخرین بروزرسانی: " + new Date().toLocaleString();
+
+  // After build, apply current search and set sticky on first visible
+  applySearch();
 }
 
 document.getElementById("refreshBtn").addEventListener("click", buildTable);
 document.getElementById("downloadCSV").addEventListener("click", downloadCSV);
+document.getElementById("search").addEventListener("input", debounce(applySearch, 200));
+document.getElementById("clearSearch").addEventListener("click", ()=>{ 
+  document.getElementById("search").value=""; applySearch();
+});
+
+// Initial
 buildTable();
+// Auto refresh each minute
 setInterval(buildTable, 60000);
 </script>
 </body>
