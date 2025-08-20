@@ -3,21 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📊 Crypto Dashboard – Top 20</title>
+  <title>📊 Crypto Dashboard – Top 20 (Plus)</title>
   <style>
+    :root{ --hdr-h:64px; --th-h:44px; --sticky-bg:#f8fbff; }
+    *{box-sizing:border-box}
     body{font-family:tahoma,Arial,sans-serif;direction:rtl;background:#f5f7fb;margin:0}
-    header{background:#1e88e5;color:#fff;padding:14px 10px;text-align:center}
-    .wrap{max-width:1500px;margin:16px auto;padding:0 12px}
+    /* Fixed site header */
+    header{position:fixed;top:0;left:0;right:0;background:#1e88e5;color:#fff;z-index:30}
+    header .hwrap{max-width:1500px;margin:0 auto;padding:10px 12px}
+    header h2{margin:.2rem 0 .1rem 0;font-weight:700}
+    header .sub{font-size:12px;opacity:.9}
+    /* Page wrapper offset for fixed header */
+    .wrap{max-width:1500px;margin:calc(var(--hdr-h) + 12px) auto 16px auto;padding:0 12px}
     .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
     input,select,button{padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;font-family:inherit}
     button{background:#1e88e5;color:#fff;cursor:pointer}
     button:disabled{background:#90caf9;cursor:not-allowed}
     .note{font-size:12px;color:#546e7a;margin-top:6px}
+    /* Responsive table container */
     .table-wrap{overflow:auto;background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
-    table{border-collapse:collapse;width:100%}
+    table{border-collapse:collapse;width:100%;table-layout:fixed}
+    col.symbol{width:110px}
+    col.price{width:120px}
+    col.rsi{width:90px}
+    col.ema9{width:110px}
+    col.ema20{width:110px}
     th,td{border-bottom:1px solid #eee;padding:8px 10px;text-align:center;white-space:nowrap;font-size:13px}
-    th{background:#e3f2fd;color:#0d47a1;position:sticky;top:0;z-index:1}
-    tr:hover{background:#fafcff}
+    /* Sticky table header (below the fixed site header) */
+    thead th{background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:20;height:var(--th-h)}
+    /* Zebra rows for readability */
+    tbody tr:nth-child(even){background:#fafcff}
+    tr:hover{background:#f3f8ff}
+    /* Positive/Negative & badges */
     .positive{color:#2e7d32;font-weight:600}
     .negative{color:#c62828;font-weight:600}
     .badge{padding:2px 6px;border-radius:8px;font-weight:600}
@@ -26,12 +43,47 @@
     .neutral{background:#eceff1;color:#37474f}
     .muted{color:#607d8b}
     .nowrap{white-space:nowrap}
+    /* RSI coloring */
+    .rsi-high{color:#c62828;font-weight:700}  /* 70+ */
+    .rsi-low{color:#2e7d32;font-weight:700}   /* <=30 */
+    /* Sticky first five columns */
+    td, th{background-clip:padding-box}
+    th.stk, td.stk{position:sticky;z-index:10;background:#fff}
+    thead th.stk{background:#e3f2fd}
+    th.c1,td.c1{left:0;z-index:12}
+    th.c2,td.c2{left:110px}
+    th.c3,td.c3{left:230px}
+    th.c4,td.c4{left:320px}
+    th.c5,td.c5{left:430px}
+    /* subtle separators for sticky cols */
+    th.stk::after, td.stk::after{
+      content:"";position:absolute;top:0;bottom:0;left:100%;width:1px;background:#e3eaf3
+    }
+    /* Sticky first data row (optional) */
+    tbody tr:first-child{position:sticky;top:calc(var(--hdr-h) + var(--th-h));z-index:5;background:var(--sticky-bg)}
+    tbody tr:first-child td{background:var(--sticky-bg)}
+    /* Tooltip (use native title + helper icon style) */
+    th .tt{border-bottom:1px dotted #0d47a1;cursor:help}
+    /* Compact on small screens */
+    @media (max-width:900px){
+      col.symbol{width:92px}
+      col.price{width:105px}
+      col.rsi{width:80px}
+      col.ema9{width:96px}
+      col.ema20{width:96px}
+      th.c2,td.c2{left:92px}
+      th.c3,td.c3{left:197px}
+      th.c4,td.c4{left:277px}
+      th.c5,td.c5{left:373px}
+    }
   </style>
 </head>
 <body>
   <header>
-    <h2>📊 Crypto Dashboard – Top 20</h2>
-    <div style="font-size:12px;opacity:.9">منبع داده: Binance (OHLCV) از طریق Codetabs Proxy | اندیکاتورها در مرورگر محاسبه می‌شوند</div>
+    <div class="hwrap">
+      <h2>📊 Crypto Dashboard – Top 20 (Plus)</h2>
+      <div class="sub">منبع داده: Binance (OHLCV) از طریق Codetabs Proxy | اندیکاتورها در مرورگر محاسبه می‌شوند</div>
+    </div>
   </header>
 
   <div class="wrap">
@@ -45,39 +97,42 @@
         <option value="1d">1d</option>
       </select>
       <button id="refreshBtn">بروزرسانی</button>
+      <button id="downloadCSV">دانلود CSV</button>
       <span id="lastUpdate" class="note"></span>
     </div>
-    <div>
-      <input type="text" id="searchInput" placeholder="🔍 جستجو..." style="margin-bottom:10px;width:100%;padding:8px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
-    </div>
+
     <div class="table-wrap">
       <table id="crypto-table">
+        <colgroup>
+          <col class="symbol"><col class="price"><col class="rsi"><col class="ema9"><col class="ema20">
+          <col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col>
+        </colgroup>
         <thead>
           <tr>
-            <th>Symbol</th>
-            <th>Price</th>
-            <th>RSI(14)</th>
-            <th>EMA9</th>
-            <th>EMA20</th>
-            <th>EMA50</th>
-            <th>EMA100</th>
-            <th>MACD</th>
-            <th>Signal</th>
-            <th>L</th>
-            <th>S</th>
-            <th>PP</th>
-            <th>Long</th>
-            <th>Short</th>
-            <th>Entry</th>
-            <th>Exit (TP/SL)</th>
-            <th>Support</th>
-            <th>Resistance</th>
-            <th>تثبیت روی حمایت؟</th>
-            <th>تثبیت روی مقاومت؟</th>
-            <th>Breakout</th>
-            <th>Bounce</th>
-            <th>Golden Cross</th>
-            <th>Rally</th>
+            <th class="stk c1" title="نماد جفت‌ارز (USDT)"> <span class="tt">Symbol</span></th>
+            <th class="stk c2" title="قیمت آخرین کندل بسته‌شده"> <span class="tt">Price</span></th>
+            <th class="stk c3" title="Relative Strength Index با دوره ۱۴"> <span class="tt">RSI(14)</span></th>
+            <th class="stk c4" title="Exponential Moving Average – 9"> <span class="tt">EMA9</span></th>
+            <th class="stk c5" title="Exponential Moving Average – 20"> <span class="tt">EMA20</span></th>
+            <th title="Exponential Moving Average – 50"><span class="tt">EMA50</span></th>
+            <th title="Exponential Moving Average – 100"><span class="tt">EMA100</span></th>
+            <th title="MACD Line = EMA(12)-EMA(26)"><span class="tt">MACD</span></th>
+            <th title="Signal Line = EMA(9) روی MACD"><span class="tt">Signal</span></th>
+            <th title="سیگنال Long بر اساس شرایط تعریف‌شده"><span class="tt">L</span></th>
+            <th title="سیگنال Short بر اساس شرایط تعریف‌شده"><span class="tt">S</span></th>
+            <th title="Pivot Point روزانه (H+L+C)/3"><span class="tt">PP</span></th>
+            <th title="تأیید لانگ"><span class="tt">Long</span></th>
+            <th title="تأیید شورت"><span class="tt">Short</span></th>
+            <th title="نقطه ورود پیشنهادی"><span class="tt">Entry</span></th>
+            <th title="طرح خروج (TP/SL) مبتنی بر ATR"><span class="tt">Exit (TP/SL)</span></th>
+            <th title="حمایت ۲۰ کندل اخیر"><span class="tt">Support</span></th>
+            <th title="مقاومت ۲۰ کندل اخیر"><span class="tt">Resistance</span></th>
+            <th title="نزدیکی قیمت به حمایت (±۰.۳٪)"><span class="tt">تثبیت روی حمایت؟</span></th>
+            <th title="نزدیکی قیمت به مقاومت (±۰.۳٪)"><span class="tt">تثبیت روی مقاومت؟</span></th>
+            <th title="شکست مقاومت اخیر"><span class="tt">Breakout</span></th>
+            <th title="بازگشت از حمایت با RSI صعودی"><span class="tt">Bounce</span></th>
+            <th title="تقاطع طلایی EMA50/EMA200"><span class="tt">Golden Cross</span></th>
+            <th title="حرکت قدرتمند صعودی (بالای EMAها، RSI>70، MACD>Signal)"><span class="tt">Rally</span></th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -193,6 +248,23 @@ function atr(highs, lows, closes, period=14){
   return out;
 }
 
+// ====== CSV Download ======
+function downloadCSV(){
+  const table = document.getElementById("crypto-table");
+  const rows = Array.from(table.querySelectorAll("tr"));
+  const data = rows.map(row => Array.from(row.children).map(td => td.innerText.replace(/\s+/g,' ').trim()));
+  const csv = data.map(r => r.map(cell => /[",\n]/.test(cell) ? '"' + cell.replace(/"/g,'""') + '"' : cell).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "crypto_dashboard.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ====== Main Build ======
 async function buildTable(){
   const tbody = document.querySelector("#crypto-table tbody");
@@ -279,14 +351,15 @@ async function buildTable(){
       const macdClass = (macdv!=null && sigv!=null && (macdv - sigv)>=0) ? "positive" : "negative";
       const longBadge  = longCond  ? '<span class="badge good">✅</span>' : '<span class="badge neutral">—</span>';
       const shortBadge = shortCond ? '<span class="badge bad">⚠</span>'  : '<span class="badge neutral">—</span>';
+      const rsiClass = (rsiv!=null) ? (rsiv>=70 ? "rsi-high" : (rsiv<=30 ? "rsi-low" : "")) : "";
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td class="nowrap">${symbol}</td>
-        <td>${fmt(last,4)}</td>
-        <td>${fmt(rsiv,2)}</td>
-        <td>${fmt(ema9v,4)}</td>
-        <td>${fmt(ema20v,4)}</td>
+        <td class="nowrap stk c1">${symbol}</td>
+        <td class="stk c2">${fmt(last,4)}</td>
+        <td class="${rsiClass} stk c3">${fmt(rsiv,2)}</td>
+        <td class="stk c4">${fmt(ema9v,4)}</td>
+        <td class="stk c5">${fmt(ema20v,4)}</td>
         <td>${fmt(ema50v,4)}</td>
         <td>${fmt(ema100v,4)}</td>
         <td class="${macdClass}">${fmt(macdv,6)}</td>
@@ -320,6 +393,7 @@ async function buildTable(){
 }
 
 document.getElementById("refreshBtn").addEventListener("click", buildTable);
+document.getElementById("downloadCSV").addEventListener("click", downloadCSV);
 buildTable();
 setInterval(buildTable, 60000);
 </script>
