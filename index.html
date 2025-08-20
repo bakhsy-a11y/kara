@@ -362,7 +362,7 @@ function applySearch(){
   const rows = Array.from(tbody.querySelectorAll("tr"));
   let firstVisible = null;
   rows.forEach(r => {
-    const sym = (r.getAttribute("data-symbol") || r.children[0]?.textContent || "").toUpperCase();
+    const sym = (r.getAttribute("data-symbol") || r.querySelector("td")?.textContent || "").toUpperCase();
     if(!q || sym.includes(q)){
       r.style.display = "";
       if(!firstVisible) firstVisible = r;
@@ -401,6 +401,7 @@ async function buildTable(){
       <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
       <td>—</td><td>—</td><td>—</td><td>—</td>
     `;
+    tr.setAttribute(\"data-symbol\", symbol);
     tr.setAttribute(\"data-symbol\", symbol);
     tbody.appendChild(tr);
     rows.set(symbol, tr);
@@ -505,6 +506,7 @@ async function fillRow(tr, symbol, interval){
       <td>${rally}</td>
     `;
     tr.setAttribute(\"data-symbol\", symbol);
+    tr.setAttribute(\"data-symbol\", symbol);
   }catch(err){
     tr.innerHTML = `
       <td class="nowrap stk c1">${symbol}</td>
@@ -513,6 +515,7 @@ async function fillRow(tr, symbol, interval){
       <td class="stk c4">—</td>
       <td class="stk c5">—</td>
       <td colspan="19" class="negative" style="text-align:start">⚠️ خطا در دریافت داده برای ${symbol}: ${(err && err.message) ? err.message : err}</td>`;
+    tr.setAttribute(\"data-symbol\", symbol);
     tr.setAttribute(\"data-symbol\", symbol);
   }
 }
