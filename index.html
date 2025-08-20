@@ -78,7 +78,25 @@
       th,td{font-size:11.5px}
       table{min-width:1200px}
     }
-  </style>
+  
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  background: #f7f7f7;
+}
+td.stk, th.stk {
+  position: sticky;
+  z-index: 1500;
+  background: inherit;
+}
+th.c1, td.c1 { left: 0; }
+th.c2, td.c2 { left: 80px; }
+th.c3, td.c3 { left: 160px; }
+th.c4, td.c4 { left: 240px; }
+th.c5, td.c5 { left: 320px; }
+
+</style>
 </head>
 <body>
   <header>
@@ -107,7 +125,8 @@
     </div>
 
     <div class="table-wrap" id="tableWrap">
-      <table id="crypto-table">
+      <div id="tableWrap" style="max-height:85vh; overflow:auto;">
+<table id="crypto-table">
         <colgroup>
           <col class="symbol"><col class="price"><col class="rsi"><col class="ema9"><col class="ema20">
           <col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col>
@@ -142,6 +161,7 @@
         </thead>
         <tbody></tbody>
       </table>
+</div>
     </div>
 
     <div class="note">
@@ -150,6 +170,36 @@
   </div>
 
 <script>
+
+// === Multi-Proxy Fetch Helpers ===
+const BINANCE = "https://api.binance.com";
+const PROXIES = [
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+  (url) => url // try direct as last resort (if CORS allowed in your env)
+];
+
+async function fetchViaProxies(url, options={}){
+  for(const prox of PROXIES){
+    const proxied = prox(url);
+    try{
+      const res = await fetch(proxied, {cache:"no-store", ...options});
+      if(!res.ok) { continue; }
+      const ct = (res.headers.get("content-type")||"").toLowerCase();
+      if(ct.includes("application/json")){
+        return await res.json();
+      } else {
+        const txt = await res.text();
+        try { return JSON.parse(txt); } catch(e){ return txt; }
+      }
+    }catch(e){
+      // try next proxy
+    }
+  }
+  throw new Error("All proxies failed");
+}
+
 // ====== Metrics (robust heights & widths for sticky) ======
 function setStickyMetrics(){
   // Header height
@@ -182,7 +232,7 @@ const SYMBOLS = [
   "LTCUSDT","AVAXUSDT","LINKUSDT","ATOMUSDT","ETCUSDT",
   "XLMUSDT","FILUSDT","APTUSDT","NEARUSDT","ICPUSDT"
 ];
-const PROXY = (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+// const PROXY = (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
 const fmt = (n, d=2) => (n==null || isNaN(n)) ? "-" : Number(n).toLocaleString(undefined,{maximumFractionDigits:d});
 const withinPct = (price, level, pct=0.3) => {
   if (!price || !level) return false;
@@ -205,16 +255,38 @@ async function fetchJson(url, {timeout=15000}={}){
 }
 
 // ====== Data Fetch ======
-async function fetchKlines(symbol, interval="15m", limit=300){
-  const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+
+async function fetchKlines(symbol, interval, limit){
+  const url = `${BINANCE}/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+  const data = await fetchViaProxies(url);
+  if(!Array.isArray(data)) throw new Error("Bad klines response");
+  return data;
+}
+&interval=${interval}&limit=${limit}`);
   const data = await fetchJson(url);
   if(!Array.isArray(data)) throw new Error("Bad payload");
   return data;
 }
 
+
 async function fetchDailyPivot(symbol){
+  // Use 24hr ticker as a proxy to H/L/C; if fails, derive from daily kline
   try{
-    const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=3`);
+    const url = `${BINANCE}/api/v3/ticker/24hr?symbol=${symbol}`;
+    const t = await fetchViaProxies(url);
+    if(t && t.highPrice && t.lowPrice && t.lastPrice){
+      const H = parseFloat(t.highPrice), L = parseFloat(t.lowPrice), C = parseFloat(t.lastPrice);
+      const PP = (H+L+C)/3;
+      return PP;
+    }
+  }catch(e){}
+  // Fallback: get last daily candle
+  const ks = await fetchKlines(symbol, "1d", 2);
+  const last = ks[ks.length-1];
+  const H = +last[2], L = +last[3], C = +last[4];
+  return (H+L+C)/3;
+}
+&interval=1d&limit=3`);
     const data = await fetchJson(url);
     if(!Array.isArray(data) || data.length < 2) return null;
     const prev = data[data.length-2];
@@ -328,6 +400,7 @@ function downloadXLS(){
 // ====== Search (robust) ======
 
 
+
 function applySearch(){
   const q = (document.getElementById("search").value || "").trim().toUpperCase();
   const tbody = document.querySelector("#crypto-table tbody");
@@ -342,6 +415,13 @@ function applySearch(){
     } else {
       r.style.display = "none";
     }
+    r.classList.remove("sticky-row");
+  });
+  if(firstVisible){
+    firstVisible.classList.add("sticky-row");
+  }
+}
+
     r.classList.remove("sticky-row");
   });
   if(firstVisible){
