@@ -78,25 +78,7 @@
       th,td{font-size:11.5px}
       table{min-width:1200px}
     }
-  
-thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2000;
-  background: #f7f7f7;
-}
-td.stk, th.stk {
-  position: sticky;
-  z-index: 1500;
-  background: inherit;
-}
-th.c1, td.c1 { left: 0; }
-th.c2, td.c2 { left: 80px; }
-th.c3, td.c3 { left: 160px; }
-th.c4, td.c4 { left: 240px; }
-th.c5, td.c5 { left: 320px; }
-
-</style>
+  </style>
 </head>
 <body>
   <header>
@@ -125,8 +107,7 @@ th.c5, td.c5 { left: 320px; }
     </div>
 
     <div class="table-wrap" id="tableWrap">
-      <div id="tableWrap" style="max-height:85vh; overflow:auto;">
-<table id="crypto-table">
+      <table id="crypto-table">
         <colgroup>
           <col class="symbol"><col class="price"><col class="rsi"><col class="ema9"><col class="ema20">
           <col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col><col>
@@ -161,7 +142,6 @@ th.c5, td.c5 { left: 320px; }
         </thead>
         <tbody></tbody>
       </table>
-</div>
     </div>
 
     <div class="note">
@@ -202,7 +182,7 @@ const SYMBOLS = [
   "LTCUSDT","AVAXUSDT","LINKUSDT","ATOMUSDT","ETCUSDT",
   "XLMUSDT","FILUSDT","APTUSDT","NEARUSDT","ICPUSDT"
 ];
-const PROXY = (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
+const PROXY = (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
 const fmt = (n, d=2) => (n==null || isNaN(n)) ? "-" : Number(n).toLocaleString(undefined,{maximumFractionDigits:d});
 const withinPct = (price, level, pct=0.3) => {
   if (!price || !level) return false;
@@ -348,7 +328,6 @@ function downloadXLS(){
 // ====== Search (robust) ======
 
 
-
 function applySearch(){
   const q = (document.getElementById("search").value || "").trim().toUpperCase();
   const tbody = document.querySelector("#crypto-table tbody");
@@ -363,13 +342,6 @@ function applySearch(){
     } else {
       r.style.display = "none";
     }
-    r.classList.remove("sticky-row");
-  });
-  if(firstVisible){
-    firstVisible.classList.add("sticky-row");
-  }
-}
-
     r.classList.remove("sticky-row");
   });
   if(firstVisible){
