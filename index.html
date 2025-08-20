@@ -324,15 +324,20 @@ function downloadXLS(){
 }
 
 // ====== Search (robust) ======
+
 function applySearch(){
   const q = (document.getElementById("search").value || "").trim().toUpperCase();
   const tbody = document.querySelector("#crypto-table tbody");
+  if(!tbody) return;
   const rows = Array.from(tbody.querySelectorAll("tr"));
-  rows.forEach(r => r.classList.remove("sticky-row"));
-  for(const r of rows){
+  rows.forEach(r => {
     const sym = (r.getAttribute("data-symbol") || r.children[0]?.textContent || "").toUpperCase();
     r.style.display = (!q || sym.includes(q)) ? "" : "none";
-  }
+    r.classList.remove("sticky-row");
+  });
+  const firstVisible = rows.find(r => r.style.display !== "none");
+  if(firstVisible) firstVisible.classList.add("sticky-row");
+}
   const firstVisible = rows.find(r => r.style.display !== "none");
   if(firstVisible) firstVisible.classList.add("sticky-row");
 }
@@ -450,6 +455,7 @@ async function buildTable(){
   // After DOM filled, set sticky metrics so widths match real rendered widths
   setStickyMetrics();
   applySearch();
+  setTimeout(setStickyMetrics, 100);
 }
 
 // ====== Events ======
@@ -460,7 +466,7 @@ document.getElementById("refreshBtn").addEventListener("click", ()=>{
 });
 document.getElementById("downloadCSV").addEventListener("click", downloadCSV);
 document.getElementById("downloadXLS").addEventListener("click", downloadXLS);
-document.getElementById("search").addEventListener("input", debounce(applySearch, 120));
+document.getElementById("search").addEventListener("input", debounce(applySearch, 60));
 document.getElementById("clearSearch").addEventListener("click", ()=>{ 
   document.getElementById("search").value=""; applySearch();
 });
