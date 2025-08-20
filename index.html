@@ -182,7 +182,7 @@ const SYMBOLS = [
   "LTCUSDT","AVAXUSDT","LINKUSDT","ATOMUSDT","ETCUSDT",
   "XLMUSDT","FILUSDT","APTUSDT","NEARUSDT","ICPUSDT"
 ];
-const PROXY = (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+const PROXY = (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
 const fmt = (n, d=2) => (n==null || isNaN(n)) ? "-" : Number(n).toLocaleString(undefined,{maximumFractionDigits:d});
 const withinPct = (price, level, pct=0.3) => {
   if (!price || !level) return false;
