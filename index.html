@@ -35,15 +35,14 @@
       border-bottom:1px solid #e9eef5;padding:9px 10px;text-align:center;white-space:nowrap;font-size:13px;
       overflow:hidden;text-overflow:ellipsis; background-clip:padding-box
     }
-    tbody tr:nth-child(odd){background:#ffffff;}
-    tbody tr:nth-child(even){background:#f9fcff;}
-    tbody tr{border-bottom:2px solid #e3eaf3;}
-    tr:hover{background:#f3f8ff}
+    tbody td{border-bottom:2px solid #d5deea}
     .num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right;line-height:1.35}
     thead th{
-      background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:1500;height:var(--th-h);
+      background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:1100;height:var(--th-h);
       box-shadow: 0 1px 0 #e1eaf3;
-    }
+     border-bottom:2px solid #cfd8e3; }
+    tbody tr:nth-child(even){background:#fafcff}
+    tr:hover{background:#f3f8ff}
     .positive{color:#2e7d32;font-weight:600}
     .negative{color:#c62828;font-weight:600}
     .badge{padding:2px 6px;border-radius:8px;font-weight:600}
@@ -54,8 +53,8 @@
     .rsi-high{color:#c62828;font-weight:700}
     .rsi-low{color:#2e7d32;font-weight:700}
     /* Sticky first five columns – logical start makes it RTL-safe */
-    th.stk, td.stk{position:sticky;background:#fff;z-index:1400;will-change:transform}
-    thead th.stk{background:#e3f2fd;z-index:1450}
+    th.stk, td.stk{position:sticky;background:#fff;z-index:1050;will-change:transform}
+    thead th.stk{background:#e3f2fd;z-index:1150}
     th.c1,td.c1{inset-inline-start:0}
     th.c2,td.c2{inset-inline-start:var(--w1)}
     th.c3,td.c3{inset-inline-start:calc(var(--w1) + var(--w2))}
@@ -113,11 +112,30 @@
         </colgroup>
         <thead>
           <tr>
-            <th class="stk c1"><span class="tt">Symbol</span></th>
-            <th class="stk c2"><span class="tt">Price</span></th>
-            <th class="stk c3"><span class="tt">RSI(14)</span></th>
-            <th class="stk c4"><span class="tt">EMA9</span></th>
-            <th class="stk c5"><span class="tt">EMA20</span></th>
+            <th class="stk c1" title="نماد جفت‌ارز (USDT)"> <span class="tt">Symbol</span></th>
+            <th class="stk c2" title="قیمت آخرین کندل بسته‌شده"> <span class="tt">Price</span></th>
+            <th class="stk c3" title="Relative Strength Index با دوره ۱۴"> <span class="tt">RSI(14)</span></th>
+            <th class="stk c4" title="Exponential Moving Average – 9"> <span class="tt">EMA9</span></th>
+            <th class="stk c5" title="Exponential Moving Average – 20"> <span class="tt">EMA20</span></th>
+            <th title="Exponential Moving Average – 50"><span class="tt">EMA50</span></th>
+            <th title="Exponential Moving Average – 100"><span class="tt">EMA100</span></th>
+            <th title="MACD Line = EMA(12)-EMA(26)"><span class="tt">MACD</span></th>
+            <th title="Signal Line = EMA(9) روی MACD"><span class="tt">Signal</span></th>
+            <th title="سیگنال Long بر اساس شرایط تعریف‌شده"><span class="tt">L</span></th>
+            <th title="سیگنال Short بر اساس شرایط تعریف‌شده"><span class="tt">S</span></th>
+            <th title="Pivot Point روزانه (H+L+C)/3"><span class="tt">PP</span></th>
+            <th title="تأیید لانگ"><span class="tt">Long</span></th>
+            <th title="تأیید شورت"><span class="tt">Short</span></th>
+            <th title="نقطه ورود پیشنهادی"><span class="tt">Entry</span></th>
+            <th title="طرح خروج (TP/SL) مبتنی بر ATR"><span class="tt">Exit (TP/SL)</span></th>
+            <th title="حمایت ۲۰ کندل اخیر"><span class="tt">Support</span></th>
+            <th title="مقاومت ۲۰ کندل اخیر"><span class="tt">Resistance</span></th>
+            <th title="نزدیکی قیمت به حمایت (±۰.۳٪)"><span class="tt">تثبیت روی حمایت؟</span></th>
+            <th title="نزدیکی قیمت به مقاومت (±۰.۳٪)"><span class="tt">تثبیت روی مقاومت؟</span></th>
+            <th title="شکست مقاومت اخیر"><span class="tt">Breakout</span></th>
+            <th title="بازگشت از حمایت با RSI صعودی"><span class="tt">Bounce</span></th>
+            <th title="تقاطع طلایی EMA50/EMA200"><span class="tt">Golden Cross</span></th>
+            <th title="حرکت قدرتمند صعودی (بالای EMAها، RSI>70، MACD>Signal)"><span class="tt">Rally</span></th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -130,24 +148,333 @@
   </div>
 
 <script>
+// ====== Metrics (robust heights & widths for sticky) ======
 function setStickyMetrics(){
+  // Header height
   const hdr = document.querySelector("header");
   const h = hdr ? (hdr.offsetHeight || 64) : 64;
   document.documentElement.style.setProperty("--hdr-h", h + "px");
+
+  // Measure first 5 header cells to derive exact widths
+  const ths = document.querySelectorAll("#crypto-table thead th");
+  if (!ths || ths.length < 5) return;
+  const w1 = ths[0].offsetWidth;
+  const w2 = ths[1].offsetWidth;
+  const w3 = ths[2].offsetWidth;
+  const w4 = ths[3].offsetWidth;
+  const w5 = ths[4].offsetWidth;
+  const root = document.documentElement.style;
+  root.setProperty("--w1", w1 + "px");
+  root.setProperty("--w2", w2 + "px");
+  root.setProperty("--w3", w3 + "px");
+  root.setProperty("--w4", w4 + "px");
+  root.setProperty("--w5", w5 + "px");
 }
 
 window.addEventListener("resize", setStickyMetrics);
 
-function buildTable(){
-  document.getElementById("lastUpdate").textContent =
-    "آخرین بروزرسانی: " + new Date().toLocaleString();
-  setStickyMetrics();
+// ====== Utils ======
+const SYMBOLS = [
+  "BTCUSDT","ETHUSDT","BNBUSDT","XRPUSDT","SOLUSDT",
+  "ADAUSDT","DOGEUSDT","TRXUSDT","MATICUSDT","DOTUSDT",
+  "LTCUSDT","AVAXUSDT","LINKUSDT","ATOMUSDT","ETCUSDT",
+  "XLMUSDT","FILUSDT","APTUSDT","NEARUSDT","ICPUSDT"
+];
+const PROXY = (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
+const fmt = (n, d=2) => (n==null || isNaN(n)) ? "-" : Number(n).toLocaleString(undefined,{maximumFractionDigits:d});
+const withinPct = (price, level, pct=0.3) => {
+  if (!price || !level) return false;
+  const diff = Math.abs((price - level)/level)*100;
+  return diff <= pct;
+};
+const sleep = (ms) => new Promise(r=>setTimeout(r,ms));
+
+// Abortable fetch with timeout
+async function fetchJson(url, {timeout=15000}={}){
+  const ctrl = new AbortController();
+  const id = setTimeout(()=>ctrl.abort(), timeout);
+  try{
+    const res = await fetch(url, {signal: ctrl.signal});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(id);
+  }
 }
 
+// ====== Data Fetch ======
+async function fetchKlines(symbol, interval="15m", limit=300){
+  const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+  const data = await fetchJson(url);
+  if(!Array.isArray(data)) throw new Error("Bad payload");
+  return data;
+}
+
+async function fetchDailyPivot(symbol){
+  try{
+    const url = PROXY(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=3`);
+    const data = await fetchJson(url);
+    if(!Array.isArray(data) || data.length < 2) return null;
+    const prev = data[data.length-2];
+    const H = +prev[2], L = +prev[3], C = +prev[4];
+    return (H+L+C)/3;
+  }catch(e){ return null; }
+}
+
+// ====== Indicators ======
+function ema(values, period){
+  if(!values?.length) return [];
+  const k = 2/(period+1);
+  const out = [];
+  let prev = values[0];
+  out.push(prev);
+  for(let i=1;i<values.length;i++){
+    const v = values[i]*k + prev*(1-k);
+    out.push(v);
+    prev = v;
+  }
+  return out;
+}
+
+function rsi(values, period=14){
+  if(!values?.length || values.length < period+1) return [];
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){
+    const diff = values[i]-values[i-1];
+    if(diff>=0) gains+=diff; else losses-=diff;
+  }
+  let avgGain=gains/period, avgLoss=losses/period;
+  const out = new Array(period).fill(null);
+  for(let i=period+1;i<values.length;i++){
+    const diff = values[i]-values[i-1];
+    const gain = diff>0?diff:0;
+    const loss = diff<0? -diff:0;
+    avgGain = (avgGain*(period-1)+gain)/period;
+    avgLoss = (avgLoss*(period-1)+loss)/period;
+    const rs = avgLoss===0 ? 1000 : avgGain/avgLoss;
+    out.push( 100 - (100/(1+rs)) );
+  }
+  return out;
+}
+
+function macd(values, fast=12, slow=26, signalPeriod=9){
+  if(!values?.length) return {macdLine: [], signalLine: []};
+  const ef = ema(values, fast);
+  const es = ema(values, slow);
+  const macdLine = ef.map((v,i)=>(es[i]==null?null:(v-es[i])));
+  const start = slow;
+  const macdValid = macdLine.slice(start).filter(v=>v!=null);
+  const signalPart = ema(macdValid, signalPeriod);
+  const signalLine = new Array(start).fill(null).concat(signalPart);
+  return {macdLine, signalLine};
+}
+
+function atr(highs, lows, closes, period=14){
+  if(!highs?.length || !lows?.length || !closes?.length) return [];
+  const trs = [];
+  for(let i=0;i<highs.length;i++){
+    if(i===0){ trs.push(highs[i]-lows[i]); continue; }
+    const hl = highs[i]-lows[i];
+    const hc = Math.abs(highs[i]-closes[i-1]);
+    const lc = Math.abs(lows[i]-closes[i-1]);
+    trs.push(Math.max(hl,hc,lc));
+  }
+  if(trs.length<period) return [];
+  let rma = trs.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  const out = new Array(period-1).fill(null);
+  out.push(rma);
+  for(let i=period;i<trs.length;i++){
+    rma = (rma*(period-1)+trs[i])/period;
+    out.push(rma);
+  }
+  return out;
+}
+
+// ====== Export: CSV & Excel (XLS-HTML) ======
+function downloadCSV(){
+  const table = document.getElementById("crypto-table");
+  const rows = Array.from(table.querySelectorAll("thead tr, tbody tr")).filter(r=>r.style.display!=="none");
+  const data = rows.map(row => Array.from(row.children).map(td => td.innerText.replace(/\s+/g,' ').trim()));
+  const csv = "\\ufeff" + data.map(r => r.map(cell => /[\",\\n]/.test(cell) ? '\"' + cell.replace(/\"/g,'\"\"') + '\"' : cell).join(",")).join("\\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "crypto_dashboard.csv";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+function downloadXLS(){
+  const table = document.getElementById("crypto-table");
+  const headers = Array.from(table.tHead.rows[0].cells).map(th => th.innerText.trim());
+  const visibleRows = Array.from(table.tBodies[0].rows).filter(r=>r.style.display!=="none");
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8" /></head><body><table border="1">';
+  html += "<tr>" + headers.map(h=>`<th>${h}</th>`).join("") + "</tr>";
+  for(const tr of visibleRows){
+    const cells = Array.from(tr.cells).map(td => td.innerText.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"));
+    html += "<tr>" + cells.map(c=>`<td>${c}</td>`).join("") + "</tr>";
+  }
+  html += "</table></body></html>";
+  const blob = new Blob([html], {type: "application/vnd.ms-excel;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "crypto_dashboard.xls";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+// ====== Search (robust) ======
+function applySearch(){
+  const q = (document.getElementById("search").value || "").trim().toUpperCase();
+  const tbody = document.querySelector("#crypto-table tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  rows.forEach(r => r.classList.remove("sticky-row"));
+  for(const r of rows){
+    const sym = (r.getAttribute("data-symbol") || r.children[0]?.textContent || "").toUpperCase();
+    r.style.display = (!q || sym.includes(q)) ? "" : "none";
+  }
+  const firstVisible = rows.find(r => r.style.display !== "none");
+  if(firstVisible) firstVisible.classList.add("sticky-row");
+}
+
+// Debounce helper
+function debounce(fn, ms=200){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,args),ms); }; }
+
+// ====== Main Build ======
+async function buildTable(){
+  const tbody = document.querySelector("#crypto-table tbody");
+  tbody.innerHTML = "";
+  const interval = document.getElementById("interval").value;
+
+  for(const symbol of SYMBOLS){
+    try{
+      const [kl, pp] = await Promise.all([fetchKlines(symbol, interval, 300), fetchDailyPivot(symbol)]);
+      if(!Array.isArray(kl) || kl.length === 0) throw new Error("No data");
+      const closes = kl.map(k=>+k[4]);
+      const highs  = kl.map(k=>+k[2]);
+      const lows   = kl.map(k=>+k[3]);
+      const last   = closes.at(-1);
+
+      // Indicators
+      const ema9Arr   = ema(closes,9);
+      const ema20Arr  = ema(closes,20);
+      const ema50Arr  = ema(closes,50);
+      const ema100Arr = ema(closes,100);
+      const ema200Arr = ema(closes,200);
+      const rsiArr    = rsi(closes,14);
+      const {macdLine, signalLine} = macd(closes,12,26,9);
+
+      const ema9v   = ema9Arr.at(-1);
+      const ema20v  = ema20Arr.at(-1);
+      const ema50v  = ema50Arr.at(-1);
+      const ema100v = ema100Arr.at(-1);
+      const ema200v = ema200Arr.at(-1);
+      const rsiv    = rsiArr.at(-1);
+      const macdv   = macdLine.at(-1);
+      const sigv    = signalLine.at(-1);
+
+      // Basic signals
+      const longCond  = last>ema20v && macdv!=null && sigv!=null && macdv>sigv && rsiv>50;
+      const shortCond = last<ema20v && macdv!=null && sigv!=null && macdv<sigv && rsiv<50;
+
+      const L = longCond ? "L" : "";
+      const S = shortCond ? "S" : "";
+      const PP = pp ? (pp.toFixed ? pp.toFixed(2) : pp) : "-";
+
+      const last20 = closes.slice(-20);
+      const support = Math.min(...last20);
+      const resistance = Math.max(...last20);
+
+      const onSupport = withinPct(last, support, 0.3) ? "✅" : "—";
+      const onResistance = withinPct(last, resistance, 0.3) ? "✅" : "—";
+      const breakout = last > resistance*1.002 ? "✅" : "—";
+      const prevRsi = rsiArr.slice(-2)[0];
+      const bounce = withinPct(last, support, 0.3) && prevRsi!=null && rsiv>prevRsi ? "✅" : "—";
+      const ema50Prev = ema50Arr.at(-2), ema200Prev = ema200Arr.at(-2);
+      const golden = (ema50Prev!=null && ema200Prev!=null && ema50Prev<ema200Prev && ema50v>ema200v) ? "✅" : "—";
+      const rally = (last>ema9v && last>ema20v && rsiv>70 && macdv>sigv) ? "✅" : "—";
+
+      const macdClass = (macdv!=null && sigv!=null && (macdv - sigv)>=0) ? "positive" : "negative";
+      const longBadge  = longCond  ? '<span class="badge good">✅</span>' : '<span class="badge neutral">—</span>';
+      const shortBadge = shortCond ? '<span class="badge bad">⚠</span>'  : '<span class="badge neutral">—</span>';
+      const rsiClass = (rsiv!=null) ? (rsiv>=70 ? "rsi-high" : (rsiv<=30 ? "rsi-low" : "")) : "";
+
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-symbol", symbol);
+      tr.innerHTML = `
+        <td class="nowrap stk c1">${symbol}</td>
+        <td class="stk c2 num">${fmt(last,6)}</td>
+        <td class="${rsiClass} stk c3 num">${fmt(rsiv,2)}</td>
+        <td class="stk c4 num">${fmt(ema9v,6)}</td>
+        <td class="stk c5 num">${fmt(ema20v,6)}</td>
+        <td class="num">${fmt(ema50v,6)}</td>
+        <td class="num">${fmt(ema100v,6)}</td>
+        <td class="${macdClass} num">${fmt(macdv,6)}</td>
+        <td class="${macdClass} num">${fmt(sigv,6)}</td>
+        <td>${L}</td>
+        <td>${S}</td>
+        <td class="num">${PP}</td>
+        <td>${longBadge}</td>
+        <td>${shortBadge}</td>
+        <td class="num">-</td>
+        <td class="num">-</td>
+        <td class="num">${fmt(Math.min(...last20),6)}</td>
+        <td class="num">${fmt(Math.max(...last20),6)}</td>
+        <td>${onSupport}</td>
+        <td>${onResistance}</td>
+        <td>${breakout}</td>
+        <td>${bounce}</td>
+        <td>${golden}</td>
+        <td>${rally}</td>
+      `;
+      tbody.appendChild(tr);
+    }catch(err){
+      // Fallback row so layout/search remain useful
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-symbol", symbol);
+      tr.innerHTML = `
+        <td class="nowrap stk c1">${symbol}</td>
+        <td class="stk c2">—</td>
+        <td class="stk c3">—</td>
+        <td class="stk c4">—</td>
+        <td class="stk c5">—</td>
+        <td colspan="19" class="negative" style="text-align:start">⚠️ خطا در دریافت داده برای ${symbol}: ${(err && err.message) ? err.message : err}</td>`;
+      tbody.appendChild(tr);
+    }
+    await sleep(90);
+  }
+
+  document.getElementById("lastUpdate").textContent =
+    "آخرین بروزرسانی: " + new Date().toLocaleString();
+
+  // After DOM filled, set sticky metrics so widths match real rendered widths
+  setStickyMetrics();
+  applySearch();
+}
+
+// ====== Events ======
+document.getElementById("refreshBtn").addEventListener("click", ()=>{
+  const tw = document.getElementById("tableWrap");
+  const sTop = tw ? tw.scrollTop : 0; const sLeft = tw ? tw.scrollLeft : 0;
+  Promise.resolve(buildTable()).then(()=>{ if(tw){ tw.scrollTop = sTop; tw.scrollLeft = sLeft; } });
+});
+document.getElementById("downloadCSV").addEventListener("click", downloadCSV);
+document.getElementById("downloadXLS").addEventListener("click", downloadXLS);
+document.getElementById("search").addEventListener("input", debounce(applySearch, 120));
+document.getElementById("clearSearch").addEventListener("click", ()=>{ 
+  document.getElementById("search").value=""; applySearch();
+});
+
+// Init
 window.addEventListener("load", ()=>{
   setStickyMetrics();
   buildTable();
-  setInterval(buildTable, 300000);
+  // Optional periodic refresh
+  setInterval(()=>{
+  const tw = document.getElementById("tableWrap");
+  const sTop = tw ? tw.scrollTop : 0; const sLeft = tw ? tw.scrollLeft : 0;
+  Promise.resolve(buildTable()).then(()=>{ if(tw){ tw.scrollTop = sTop; tw.scrollLeft = sLeft; } });
+}, 300000);
 });
 </script>
 </body>
