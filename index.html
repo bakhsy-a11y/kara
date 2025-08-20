@@ -379,7 +379,9 @@ async function buildTable(){
     rows.set(symbol, tr);
   }
 
-  \1runAfterPaint(setStickyMetrics);
+  setStickyMetrics();
+  applySearch();
+  runAfterPaint(setStickyMetrics);
 // 2) Fill rows in small batches to be gentle on API and keep UI responsive
   const BATCH = 5;
   for(let i=0; i<SYMBOLS.length; i+=BATCH){
