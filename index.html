@@ -1,21 +1,22 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📊 Crypto Dashboard – Fixed</title>
+  <title>📊 Crypto Dashboard – Final Fixed</title>
   <style>
     :root{
       --hdr-h:64px; --th-h:44px; --sticky-bg:#f8fbff;
-      --w1:140px; --w2:160px; --w3:110px; --w4:140px; --w5:140px; /* widths for first 5 sticky cols */
+      /* These will be overwritten dynamically to match real widths */
+      --w1:140px; --w2:160px; --w3:120px; --w4:140px; --w5:140px;
     }
     *{box-sizing:border-box}
-    body{font-family:tahoma,Arial,sans-serif;direction:rtl;background:#f5f7fb;margin:0}
-    header{position:fixed;top:0;left:0;right:0;background:#1e88e5;color:#fff;z-index:1000}
-    header .hwrap{max-width:1600px;margin:0 auto;padding:10px 12px}
+    body{font-family:tahoma,Arial,sans-serif;background:#f5f7fb;margin:0}
+    header{position:fixed;top:0;inset-inline:0;background:#1e88e5;color:#fff;z-index:1200}
+    header .hwrap{max-width:1700px;margin:0 auto;padding:10px 12px}
     header h2{margin:.2rem 0 .1rem 0;font-weight:700}
     header .sub{font-size:12px;opacity:.9}
-    .wrap{max-width:1600px;margin:calc(var(--hdr-h) + 12px) auto 16px auto;padding:0 12px}
+    .wrap{max-width:1700px;margin:calc(var(--hdr-h) + 12px) auto 16px auto;padding:0 12px}
     .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
     input[type="text"],select,button{padding:8px 10px;border:1px solid #cfd8dc;border-radius:8px;font-family:inherit}
     button{background:#1e88e5;color:#fff;cursor:pointer}
@@ -23,18 +24,22 @@
     button:disabled{background:#90caf9;cursor:not-allowed}
     .note{font-size:12px;color:#546e7a;margin-top:6px}
     .table-wrap{overflow:auto;background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
-    table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed}
-    col.symbol{width:var(--w1)}
-    col.price{width:var(--w2)}
-    col.rsi{width:var(--w3)}
-    col.ema9{width:var(--w4)}
-    col.ema20{width:var(--w5)}
-    th,td{
-      border-bottom:1px solid #eee;padding:9px 10px;text-align:center;white-space:nowrap;font-size:13px;
-      overflow:hidden;text-overflow:ellipsis
+    table{
+      border-collapse:separate;border-spacing:0;width:100%;
+      min-width: 1600px; table-layout:auto;
+      contain: paint; /* helps some sticky rendering engines */
     }
-    .num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right}
-    thead th{background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:900;height:var(--th-h)}
+    /* Optional initial widths; final widths are computed */
+    col.symbol{width:var(--w1)} col.price{width:var(--w2)} col.rsi{width:var(--w3)} col.ema9{width:var(--w4)} col.ema20{width:var(--w5)}
+    th,td{
+      border-bottom:1px solid #e9eef5;padding:9px 10px;text-align:center;white-space:nowrap;font-size:13px;
+      overflow:hidden;text-overflow:ellipsis; background-clip:padding-box
+    }
+    .num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right;line-height:1.35}
+    thead th{
+      background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:1100;height:var(--th-h);
+      box-shadow: 0 1px 0 #e1eaf3;
+    }
     tbody tr:nth-child(even){background:#fafcff}
     tr:hover{background:#f3f8ff}
     .positive{color:#2e7d32;font-weight:600}
@@ -46,34 +51,36 @@
     .nowrap{white-space:nowrap}
     .rsi-high{color:#c62828;font-weight:700}
     .rsi-low{color:#2e7d32;font-weight:700}
-    td, th{background-clip:padding-box}
-    /* Sticky first five columns using CSS variables for accurate offsets */
-    th.stk, td.stk{position:sticky;background:#fff}
-    thead th.stk{background:#e3f2fd}
-    th.c1,td.c1{left:0;z-index:920}
-    th.c2,td.c2{left:var(--w1);z-index:910}
-    th.c3,td.c3{left:calc(var(--w1) + var(--w2));z-index:910}
-    th.c4,td.c4{left:calc(var(--w1) + var(--w2) + var(--w3));z-index:910}
-    th.c5,td.c5{left:calc(var(--w1) + var(--w2) + var(--w3) + var(--w4));z-index:910}
-    th.stk::after, td.stk::after{content:"";position:absolute;top:0;bottom:0;left:100%;width:1px;background:#e3eaf3}
+    /* Sticky first five columns – logical start makes it RTL-safe */
+    th.stk, td.stk{position:sticky;background:#fff;z-index:1050;will-change:transform}
+    thead th.stk{background:#e3f2fd;z-index:1150}
+    th.c1,td.c1{inset-inline-start:0}
+    th.c2,td.c2{inset-inline-start:var(--w1)}
+    th.c3,td.c3{inset-inline-start:calc(var(--w1) + var(--w2))}
+    th.c4,td.c4{inset-inline-start:calc(var(--w1) + var(--w2) + var(--w3))}
+    th.c5,td.c5{inset-inline-start:calc(var(--w1) + var(--w2) + var(--w3) + var(--w4))}
+    /* Subtle divider on sticky edges */
+    th.stk::after, td.stk::after{content:"";position:absolute;top:0;bottom:0;inset-inline-end:-1px;width:1px;background:#e3eaf3;pointer-events:none}
     /* Sticky first visible data row */
-    tbody tr.sticky-row{position:sticky;top:calc(var(--hdr-h) + var(--th-h));z-index:800;background:var(--sticky-bg)}
+    tbody tr.sticky-row{position:sticky;top:calc(var(--hdr-h) + var(--th-h));z-index:1000;background:var(--sticky-bg)}
     tbody tr.sticky-row td{background:var(--sticky-bg)}
     th .tt{border-bottom:1px dotted #0d47a1;cursor:help}
     @media (max-width:1100px){
-      :root{ --w1:120px; --w2:150px; --w3:95px; --w4:125px; --w5:125px; }
+      :root{ --w1:130px; --w2:150px; --w3:105px; --w4:125px; --w5:125px; }
       th,td{font-size:12px}
+      table{min-width:1400px}
     }
     @media (max-width:760px){
-      :root{ --w1:110px; --w2:140px; --w3:90px; --w4:110px; --w5:110px; }
+      :root{ --w1:120px; --w2:140px; --w3:95px; --w4:110px; --w5:110px; }
       th,td{font-size:11.5px}
+      table{min-width:1200px}
     }
   </style>
 </head>
 <body>
   <header>
     <div class="hwrap">
-      <h2>📊 Crypto Dashboard – Fixed</h2>
+      <h2>📊 Crypto Dashboard – Final Fixed</h2>
       <div class="sub">منبع داده: Binance (OHLCV) از طریق Codetabs Proxy | اندیکاتورها در مرورگر محاسبه می‌شوند</div>
     </div>
   </header>
@@ -96,7 +103,7 @@
       <span id="lastUpdate" class="note"></span>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap" id="tableWrap">
       <table id="crypto-table">
         <colgroup>
           <col class="symbol"><col class="price"><col class="rsi"><col class="ema9"><col class="ema20">
@@ -140,6 +147,31 @@
   </div>
 
 <script>
+// ====== Metrics (robust heights & widths for sticky) ======
+function setStickyMetrics(){
+  // Header height
+  const hdr = document.querySelector("header");
+  const h = hdr ? (hdr.offsetHeight || 64) : 64;
+  document.documentElement.style.setProperty("--hdr-h", h + "px");
+
+  // Measure first 5 header cells to derive exact widths
+  const ths = document.querySelectorAll("#crypto-table thead th");
+  if (!ths || ths.length < 5) return;
+  const w1 = ths[0].offsetWidth;
+  const w2 = ths[1].offsetWidth;
+  const w3 = ths[2].offsetWidth;
+  const w4 = ths[3].offsetWidth;
+  const w5 = ths[4].offsetWidth;
+  const root = document.documentElement.style;
+  root.setProperty("--w1", w1 + "px");
+  root.setProperty("--w2", w2 + "px");
+  root.setProperty("--w3", w3 + "px");
+  root.setProperty("--w4", w4 + "px");
+  root.setProperty("--w5", w5 + "px");
+}
+
+window.addEventListener("resize", setStickyMetrics);
+
 // ====== Utils ======
 const SYMBOLS = [
   "BTCUSDT","ETHUSDT","BNBUSDT","XRPUSDT","SOLUSDT",
@@ -157,7 +189,7 @@ const withinPct = (price, level, pct=0.3) => {
 const sleep = (ms) => new Promise(r=>setTimeout(r,ms));
 
 // Abortable fetch with timeout
-async function fetchJson(url, {timeout=12000}={}){
+async function fetchJson(url, {timeout=15000}={}){
   const ctrl = new AbortController();
   const id = setTimeout(()=>ctrl.abort(), timeout);
   try{
@@ -184,8 +216,7 @@ async function fetchDailyPivot(symbol){
     if(!Array.isArray(data) || data.length < 2) return null;
     const prev = data[data.length-2];
     const H = +prev[2], L = +prev[3], C = +prev[4];
-    const PP = (H+L+C)/3;
-    return PP;
+    return (H+L+C)/3;
   }catch(e){ return null; }
 }
 
@@ -269,15 +300,11 @@ function downloadCSV(){
   const a = document.createElement("a");
   a.href = url;
   a.download = "crypto_dashboard.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
 function downloadXLS(){
   const table = document.getElementById("crypto-table");
-  // Build a clean HTML table (only visible rows)
   const headers = Array.from(table.tHead.rows[0].cells).map(th => th.innerText.trim());
   const visibleRows = Array.from(table.tBodies[0].rows).filter(r=>r.style.display!=="none");
   let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8" /></head><body><table border="1">';
@@ -292,10 +319,7 @@ function downloadXLS(){
   const a = document.createElement("a");
   a.href = url;
   a.download = "crypto_dashboard.xls";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
 // ====== Search (robust) ======
@@ -304,21 +328,16 @@ function applySearch(){
   const tbody = document.querySelector("#crypto-table tbody");
   const rows = Array.from(tbody.querySelectorAll("tr"));
   rows.forEach(r => r.classList.remove("sticky-row"));
-  if(!q){
-    rows.forEach(r => r.style.display = "");
-  }else{
-    rows.forEach(r => {
-      const sym = (r.getAttribute("data-symbol") || r.children[0]?.textContent || "").toUpperCase();
-      r.style.display = sym.includes(q) ? "" : "none";
-    });
+  for(const r of rows){
+    const sym = (r.getAttribute("data-symbol") || r.children[0]?.textContent || "").toUpperCase();
+    r.style.display = (!q || sym.includes(q)) ? "" : "none";
   }
   const firstVisible = rows.find(r => r.style.display !== "none");
   if(firstVisible) firstVisible.classList.add("sticky-row");
 }
 
-function debounce(fn, ms=200){
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,args),ms); };
-}
+// Debounce helper
+function debounce(fn, ms=200){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,args),ms); }; }
 
 // ====== Main Build ======
 async function buildTable(){
@@ -357,35 +376,23 @@ async function buildTable(){
       const longCond  = last>ema20v && macdv!=null && sigv!=null && macdv>sigv && rsiv>50;
       const shortCond = last<ema20v && macdv!=null && sigv!=null && macdv<sigv && rsiv<50;
 
-      // L / S / PP badges
       const L = longCond ? "L" : "";
       const S = shortCond ? "S" : "";
       const PP = pp ? (pp.toFixed ? pp.toFixed(2) : pp) : "-";
 
-      // Support/Resistance (20 candles)
       const last20 = closes.slice(-20);
       const support = Math.min(...last20);
       const resistance = Math.max(...last20);
 
-      // Stabilization near S/R (±0.3%)
       const onSupport = withinPct(last, support, 0.3) ? "✅" : "—";
       const onResistance = withinPct(last, resistance, 0.3) ? "✅" : "—";
-
-      // Breakout: close > recent resistance * 1.002
       const breakout = last > resistance*1.002 ? "✅" : "—";
-
-      // Bounce: near support and RSI rising vs one bar ago
       const prevRsi = rsiArr.slice(-2)[0];
       const bounce = withinPct(last, support, 0.3) && prevRsi!=null && rsiv>prevRsi ? "✅" : "—";
-
-      // Golden Cross: EMA50 crossed above EMA200 in last bar
       const ema50Prev = ema50Arr.at(-2), ema200Prev = ema200Arr.at(-2);
       const golden = (ema50Prev!=null && ema200Prev!=null && ema50Prev<ema200Prev && ema50v>ema200v) ? "✅" : "—";
-
-      // Rally: strong up-move
       const rally = (last>ema9v && last>ema20v && rsiv>70 && macdv>sigv) ? "✅" : "—";
 
-      // Classes
       const macdClass = (macdv!=null && sigv!=null && (macdv - sigv)>=0) ? "positive" : "negative";
       const longBadge  = longCond  ? '<span class="badge good">✅</span>' : '<span class="badge neutral">—</span>';
       const shortBadge = shortCond ? '<span class="badge bad">⚠</span>'  : '<span class="badge neutral">—</span>';
@@ -421,29 +428,45 @@ async function buildTable(){
       `;
       tbody.appendChild(tr);
     }catch(err){
+      // Fallback row so layout/search remain useful
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="24" class="negative">خطا برای ${symbol}: ${err?.message || err}</td>`;
+      tr.setAttribute("data-symbol", symbol);
+      tr.innerHTML = `
+        <td class="nowrap stk c1">${symbol}</td>
+        <td class="stk c2">—</td>
+        <td class="stk c3">—</td>
+        <td class="stk c4">—</td>
+        <td class="stk c5">—</td>
+        <td colspan="19" class="negative" style="text-align:start">⚠️ خطا در دریافت داده برای ${symbol}: ${(err && err.message) ? err.message : err}</td>`;
       tbody.appendChild(tr);
     }
-    await sleep(120);
+    await sleep(90);
   }
 
   document.getElementById("lastUpdate").textContent =
     "آخرین بروزرسانی: " + new Date().toLocaleString();
 
+  // After DOM filled, set sticky metrics so widths match real rendered widths
+  setStickyMetrics();
   applySearch();
 }
 
+// ====== Events ======
 document.getElementById("refreshBtn").addEventListener("click", buildTable);
 document.getElementById("downloadCSV").addEventListener("click", downloadCSV);
 document.getElementById("downloadXLS").addEventListener("click", downloadXLS);
-document.getElementById("search").addEventListener("input", debounce(applySearch, 200));
+document.getElementById("search").addEventListener("input", debounce(applySearch, 120));
 document.getElementById("clearSearch").addEventListener("click", ()=>{ 
   document.getElementById("search").value=""; applySearch();
 });
 
-buildTable();
-setInterval(buildTable, 60000);
+// Init
+window.addEventListener("load", ()=>{
+  setStickyMetrics();
+  buildTable();
+  // Optional periodic refresh
+  setInterval(buildTable, 60000);
+});
 </script>
 </body>
 </html>
