@@ -27,7 +27,7 @@
     table{
       border-collapse:separate;border-spacing:0;width:100%;
       min-width: 1600px; table-layout:auto;
-      contain: paint; /* helps some sticky rendering engines */
+      
     }
     /* Optional initial widths; final widths are computed */
     col.symbol{width:var(--w1)} col.price{width:var(--w2)} col.rsi{width:var(--w3)} col.ema9{width:var(--w4)} col.ema20{width:var(--w5)}
@@ -344,116 +344,137 @@ function applySearch(){
 function debounce(fn, ms=200){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,args),ms); }; }
 
 // ====== Main Build ======
+
 async function buildTable(){
   const tbody = document.querySelector("#crypto-table tbody");
   tbody.innerHTML = "";
   const interval = document.getElementById("interval").value;
 
+  // 1) Create placeholder rows so symbols always appear immediately
+  const rows = new Map();
   for(const symbol of SYMBOLS){
-    try{
-      const [kl, pp] = await Promise.all([fetchKlines(symbol, interval, 300), fetchDailyPivot(symbol)]);
-      if(!Array.isArray(kl) || kl.length === 0) throw new Error("No data");
-      const closes = kl.map(k=>+k[4]);
-      const highs  = kl.map(k=>+k[2]);
-      const lows   = kl.map(k=>+k[3]);
-      const last   = closes.at(-1);
-
-      // Indicators
-      const ema9Arr   = ema(closes,9);
-      const ema20Arr  = ema(closes,20);
-      const ema50Arr  = ema(closes,50);
-      const ema100Arr = ema(closes,100);
-      const ema200Arr = ema(closes,200);
-      const rsiArr    = rsi(closes,14);
-      const {macdLine, signalLine} = macd(closes,12,26,9);
-
-      const ema9v   = ema9Arr.at(-1);
-      const ema20v  = ema20Arr.at(-1);
-      const ema50v  = ema50Arr.at(-1);
-      const ema100v = ema100Arr.at(-1);
-      const ema200v = ema200Arr.at(-1);
-      const rsiv    = rsiArr.at(-1);
-      const macdv   = macdLine.at(-1);
-      const sigv    = signalLine.at(-1);
-
-      // Basic signals
-      const longCond  = last>ema20v && macdv!=null && sigv!=null && macdv>sigv && rsiv>50;
-      const shortCond = last<ema20v && macdv!=null && sigv!=null && macdv<sigv && rsiv<50;
-
-      const L = longCond ? "L" : "";
-      const S = shortCond ? "S" : "";
-      const PP = pp ? (pp.toFixed ? pp.toFixed(2) : pp) : "-";
-
-      const last20 = closes.slice(-20);
-      const support = Math.min(...last20);
-      const resistance = Math.max(...last20);
-
-      const onSupport = withinPct(last, support, 0.3) ? "✅" : "—";
-      const onResistance = withinPct(last, resistance, 0.3) ? "✅" : "—";
-      const breakout = last > resistance*1.002 ? "✅" : "—";
-      const prevRsi = rsiArr.slice(-2)[0];
-      const bounce = withinPct(last, support, 0.3) && prevRsi!=null && rsiv>prevRsi ? "✅" : "—";
-      const ema50Prev = ema50Arr.at(-2), ema200Prev = ema200Arr.at(-2);
-      const golden = (ema50Prev!=null && ema200Prev!=null && ema50Prev<ema200Prev && ema50v>ema200v) ? "✅" : "—";
-      const rally = (last>ema9v && last>ema20v && rsiv>70 && macdv>sigv) ? "✅" : "—";
-
-      const macdClass = (macdv!=null && sigv!=null && (macdv - sigv)>=0) ? "positive" : "negative";
-      const longBadge  = longCond  ? '<span class="badge good">✅</span>' : '<span class="badge neutral">—</span>';
-      const shortBadge = shortCond ? '<span class="badge bad">⚠</span>'  : '<span class="badge neutral">—</span>';
-      const rsiClass = (rsiv!=null) ? (rsiv>=70 ? "rsi-high" : (rsiv<=30 ? "rsi-low" : "")) : "";
-
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-symbol", symbol);
-      tr.innerHTML = `
-        <td class="nowrap stk c1">${symbol}</td>
-        <td class="stk c2 num">${fmt(last,6)}</td>
-        <td class="${rsiClass} stk c3 num">${fmt(rsiv,2)}</td>
-        <td class="stk c4 num">${fmt(ema9v,6)}</td>
-        <td class="stk c5 num">${fmt(ema20v,6)}</td>
-        <td class="num">${fmt(ema50v,6)}</td>
-        <td class="num">${fmt(ema100v,6)}</td>
-        <td class="${macdClass} num">${fmt(macdv,6)}</td>
-        <td class="${macdClass} num">${fmt(sigv,6)}</td>
-        <td>${L}</td>
-        <td>${S}</td>
-        <td class="num">${PP}</td>
-        <td>${longBadge}</td>
-        <td>${shortBadge}</td>
-        <td class="num">-</td>
-        <td class="num">-</td>
-        <td class="num">${fmt(Math.min(...last20),6)}</td>
-        <td class="num">${fmt(Math.max(...last20),6)}</td>
-        <td>${onSupport}</td>
-        <td>${onResistance}</td>
-        <td>${breakout}</td>
-        <td>${bounce}</td>
-        <td>${golden}</td>
-        <td>${rally}</td>
-      `;
-      tbody.appendChild(tr);
-    }catch(err){
-      // Fallback row so layout/search remain useful
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-symbol", symbol);
-      tr.innerHTML = `
-        <td class="nowrap stk c1">${symbol}</td>
-        <td class="stk c2">—</td>
-        <td class="stk c3">—</td>
-        <td class="stk c4">—</td>
-        <td class="stk c5">—</td>
-        <td colspan="19" class="negative" style="text-align:start">⚠️ خطا در دریافت داده برای ${symbol}: ${(err && err.message) ? err.message : err}</td>`;
-      tbody.appendChild(tr);
-    }
-    await sleep(90);
+    const tr = document.createElement("tr");
+    tr.setAttribute("data-symbol", symbol);
+    tr.innerHTML = `
+      <td class="nowrap stk c1">${symbol}</td>
+      <td class="stk c2">—</td>
+      <td class="stk c3">—</td>
+      <td class="stk c4">—</td>
+      <td class="stk c5">—</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td>
+    `;
+    tbody.appendChild(tr);
+    rows.set(symbol, tr);
   }
 
-  document.getElementById("lastUpdate").textContent =
-    "آخرین بروزرسانی: " + new Date().toLocaleString();
+  \1runAfterPaint(setStickyMetrics);
+// 2) Fill rows in small batches to be gentle on API and keep UI responsive
+  const BATCH = 5;
+  for(let i=0; i<SYMBOLS.length; i+=BATCH){
+    const batch = SYMBOLS.slice(i, i+BATCH).map(sym => fillRow(rows.get(sym), sym, interval));
+    await Promise.all(batch).catch(()=>{});
+    applySearch();
+    runAfterPaint(setStickyMetrics);
+  }
 
-  // After DOM filled, set sticky metrics so widths match real rendered widths
-  setStickyMetrics();
-  applySearch();
-  setTimeout(setStickyMetrics, 100);
+  document.getElementById("lastUpdate").textContent = "آخرین بروزرسانی: " + new Date().toLocaleString();
+}
+
+// Fills one row with live data; safe for older browsers (no Array.at)
+async function fillRow(tr, symbol, interval){
+  try{
+    const [kl, pp] = await Promise.all([fetchKlines(symbol, interval, 300), fetchDailyPivot(symbol)]);
+    if(!Array.isArray(kl) || kl.length === 0) throw new Error("No data");
+
+    const closes = kl.map(k=>+k[4]);
+    const highs  = kl.map(k=>+k[2]);
+    const lows   = kl.map(k=>+k[3]);
+    const n = closes.length;
+    const last = closes[n-1];
+
+    // Indicators
+    const ema9Arr   = ema(closes,9);
+    const ema20Arr  = ema(closes,20);
+    const ema50Arr  = ema(closes,50);
+    const ema100Arr = ema(closes,100);
+    const ema200Arr = ema(closes,200);
+    const rsiArr    = rsi(closes,14);
+    const macdObj   = macd(closes,12,26,9);
+    const macdLine  = macdObj.macdLine;
+    const signalLine= macdObj.signalLine;
+
+    const ema9v   = ema9Arr[ema9Arr.length-1];
+    const ema20v  = ema20Arr[ema20Arr.length-1];
+    const ema50v  = ema50Arr[ema50Arr.length-1];
+    const ema100v = ema100Arr[ema100Arr.length-1];
+    const ema200v = ema200Arr[ema200Arr.length-1];
+    const rsiv    = rsiArr[rsiArr.length-1];
+    const macdv   = macdLine[macdLine.length-1];
+    const sigv    = signalLine[signalLine.length-1];
+
+    const longCond  = last>ema20v && macdv!=null && sigv!=null && macdv>sigv && rsiv>50;
+    const shortCond = last<ema20v && macdv!=null && sigv!=null && macdv<sigv && rsiv<50;
+    const L = longCond ? "L" : "";
+    const S = shortCond ? "S" : "";
+    const PP = pp ? (pp.toFixed ? pp.toFixed(2) : pp) : "-";
+
+    const last20 = closes.slice(-20);
+    const support = Math.min.apply(null, last20);
+    const resistance = Math.max.apply(null, last20);
+
+    const onSupport = withinPct(last, support, 0.3) ? "✅" : "—";
+    const onResistance = withinPct(last, resistance, 0.3) ? "✅" : "—";
+    const breakout = last > resistance*1.002 ? "✅" : "—";
+    const prevRsi = rsiArr.length>=2 ? rsiArr[rsiArr.length-2] : null;
+    const bounce = withinPct(last, support, 0.3) && prevRsi!=null && rsiv>prevRsi ? "✅" : "—";
+    const ema50Prev = ema50Arr.length>=2 ? ema50Arr[ema50Arr.length-2] : null;
+    const ema200Prev = ema200Arr.length>=2 ? ema200Arr[ema200Arr.length-2] : null;
+    const golden = (ema50Prev!=null && ema200Prev!=null && ema50Prev<ema200Prev && ema50v>ema200v) ? "✅" : "—";
+    const rally = (last>ema9v && last>ema20v && rsiv>70 && macdv>sigv) ? "✅" : "—";
+
+    const macdClass = (macdv!=null && sigv!=null && (macdv - sigv)>=0) ? "positive" : "negative";
+    const longBadge  = longCond  ? '<span class="badge good">✅</span>' : '<span class="badge neutral">—</span>';
+    const shortBadge = shortCond ? '<span class="badge bad">⚠</span>'  : '<span class="badge neutral">—</span>';
+    const rsiClass = (rsiv!=null) ? (rsiv>=70 ? "rsi-high" : (rsiv<=30 ? "rsi-low" : "")) : "";
+
+    tr.innerHTML = `
+      <td class="nowrap stk c1">${symbol}</td>
+      <td class="stk c2 num">${fmt(last,6)}</td>
+      <td class="${rsiClass} stk c3 num">${fmt(rsiv,2)}</td>
+      <td class="stk c4 num">${fmt(ema9v,6)}</td>
+      <td class="stk c5 num">${fmt(ema20v,6)}</td>
+      <td class="num">${fmt(ema50v,6)}</td>
+      <td class="num">${fmt(ema100v,6)}</td>
+      <td class="${macdClass} num">${fmt(macdv,6)}</td>
+      <td class="${macdClass} num">${fmt(sigv,6)}</td>
+      <td>${L}</td>
+      <td>${S}</td>
+      <td class="num">${PP}</td>
+      <td>${longBadge}</td>
+      <td>${shortBadge}</td>
+      <td class="num">-</td>
+      <td class="num">-</td>
+      <td class="num">${fmt(support,6)}</td>
+      <td class="num">${fmt(resistance,6)}</td>
+      <td>${onSupport}</td>
+      <td>${onResistance}</td>
+      <td>${breakout}</td>
+      <td>${bounce}</td>
+      <td>${golden}</td>
+      <td>${rally}</td>
+    `;
+  }catch(err){
+    tr.innerHTML = `
+      <td class="nowrap stk c1">${symbol}</td>
+      <td class="stk c2">—</td>
+      <td class="stk c3">—</td>
+      <td class="stk c4">—</td>
+      <td class="stk c5">—</td>
+      <td colspan="19" class="negative" style="text-align:start">⚠️ خطا در دریافت داده برای ${symbol}: ${(err && err.message) ? err.message : err}</td>`;
+  }
 }
 
 // ====== Events ======
@@ -480,6 +501,14 @@ window.addEventListener("load", ()=>{
   Promise.resolve(buildTable()).then(()=>{ if(tw){ tw.scrollTop = sTop; tw.scrollLeft = sLeft; } });
 }, 300000);
 });
+
+function runAfterPaint(fn){
+  if(window.requestAnimationFrame){
+    requestAnimationFrame(()=>{ setTimeout(fn, 0); });
+  }else{
+    setTimeout(fn, 50);
+  }
+}
 </script>
 </body>
 </html>
