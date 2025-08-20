@@ -340,10 +340,6 @@ function applySearch(){
   const firstVisible = rows.find(r => r.style.display !== "none");
   if(firstVisible) firstVisible.classList.add("sticky-row");
 }
-  const firstVisible = rows.find(r => r.style.display !== "none");
-  if(firstVisible) firstVisible.classList.add("sticky-row");
-}
-
 // Debounce helper
 function debounce(fn, ms=200){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,args),ms); }; }
 
