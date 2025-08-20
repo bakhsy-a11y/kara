@@ -38,9 +38,10 @@
     tbody td{border-bottom:2px solid #d5deea}
     .num{font-variant-numeric:tabular-nums;direction:ltr;text-align:right;line-height:1.35}
     thead th{
-      background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:1100;height:var(--th-h);
+      background:#e3f2fd;color:#0d47a1;position:sticky;top:var(--hdr-h);z-index:1500;height:var(--th-h);
       box-shadow: 0 1px 0 #e1eaf3;
      border-bottom:2px solid #cfd8e3; }
+    tbody tr:nth-child(odd){background:#ffffff}
     tbody tr:nth-child(even){background:#fafcff}
     tr:hover{background:#f3f8ff}
     .positive{color:#2e7d32;font-weight:600}
@@ -53,8 +54,9 @@
     .rsi-high{color:#c62828;font-weight:700}
     .rsi-low{color:#2e7d32;font-weight:700}
     /* Sticky first five columns – logical start makes it RTL-safe */
-    th.stk, td.stk{position:sticky;background:#fff;z-index:1050;will-change:transform}
-    thead th.stk{background:#e3f2fd;z-index:1150}
+    th.stk, td.stk{position:sticky;z-index:1400;will-change:transform}
+    td.stk{background:inherit}
+    thead th.stk{background:#e3f2fd;z-index:1450}
     th.c1,td.c1{inset-inline-start:0}
     th.c2,td.c2{inset-inline-start:var(--w1)}
     th.c3,td.c3{inset-inline-start:calc(var(--w1) + var(--w2))}
