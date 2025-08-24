@@ -45,6 +45,7 @@
         <option value="1d">1d</option>
       </select>
       <button id="refreshBtn">بروزرسانی</button>
+      <input type="text" id="searchBox" placeholder="جستجوی Symbol..." />
       <span id="lastUpdate" class="note"></span>
     </div>
 
@@ -207,7 +208,6 @@ async function buildTable(){
       const lows   = kl.map(k=>+k[3]);
       const vols   = kl.map(k=>+k[5]);
       const last   = closes.at(-1);
-      const lastVol= vols.at(-1);
 
       const ema9Arr   = ema(closes,9);
       const ema20Arr  = ema(closes,20);
@@ -318,5 +318,4 @@ async function buildTable(){
   }
 
   // مرتب سازی ستون Diff (Entry-TP) از بزرگ به کوچک
-  const table = document.getElementById("crypto-table");
-  const tbodySorted = table.querySelector("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
