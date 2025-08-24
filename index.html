@@ -26,6 +26,7 @@
     .neutral{background:#eceff1;color:#37474f}
     .muted{color:#607d8b}
     .nowrap{white-space:nowrap}
+    .ltr{direction:ltr}
   </style>
 </head>
 <body>
@@ -45,7 +46,7 @@
         <option value="1d">1d</option>
       </select>
       <button id="refreshBtn">بروزرسانی</button>
-      <input type="text" id="searchBox" placeholder="جستجوی Symbol..." />
+      <input type="text" id="searchBox" class="ltr" placeholder="Search Symbol..." />
       <span id="lastUpdate" class="note"></span>
     </div>
 
@@ -130,6 +131,7 @@ async function fetchDailyPivot(symbol){
 
 // ====== Indicators ======
 function ema(values, period){
+  if(!values || values.length === 0) return [];
   const k = 2/(period+1);
   const out = [];
   let prev = values[0];
@@ -143,7 +145,7 @@ function ema(values, period){
 }
 
 function rsi(values, period=14){
-  if(values.length < period+1) return [];
+  if(!values || values.length < period+1) return [];
   let gains=0, losses=0;
   for(let i=1;i<=period;i++){
     const diff = values[i]-values[i-1];
@@ -194,19 +196,55 @@ function atr(highs, lows, closes, period=14){
   return out;
 }
 
+// ====== Helpers ======
+function sortByDiffTP(){
+  const tbody = document.querySelector("#crypto-table tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  rows.sort((a,b)=>{
+    const A = parseFloat(a.cells[2]?.textContent) ;
+    const B = parseFloat(b.cells[2]?.textContent) ;
+    const aVal = Number.isFinite(A) ? A : -Infinity;
+    const bVal = Number.isFinite(B) ? B : -Infinity;
+    return bVal - aVal; // بزرگ به کوچک
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function attachSearch(){
+  const box = document.getElementById('searchBox');
+  box.addEventListener('input', ()=>{
+    const q = box.value.trim().toUpperCase();
+    const rows = document.querySelectorAll('#crypto-table tbody tr');
+    rows.forEach(row=>{
+      const sym = row.cells[0]?.textContent.toUpperCase();
+      row.style.display = sym.includes(q) ? '' : 'none';
+    });
+  });
+}
+
+function setLoading(state){
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = state;
+  btn.textContent = state ? 'در حال بروزرسانی…' : 'بروزرسانی';
+}
+
 // ====== Main Build ======
 async function buildTable(){
   const tbody = document.querySelector("#crypto-table tbody");
   tbody.innerHTML = "";
   const interval = document.getElementById("interval").value;
+  setLoading(true);
 
   for(const symbol of SYMBOLS){
     try{
-      const [kl, pp] = await Promise.all([fetchKlines(symbol, interval, 300), fetchDailyPivot(symbol)]);
+      const [kl, pp] = await Promise.all([
+        fetchKlines(symbol, interval, 300),
+        fetchDailyPivot(symbol)
+      ]);
+
       const closes = kl.map(k=>+k[4]);
       const highs  = kl.map(k=>+k[2]);
       const lows   = kl.map(k=>+k[3]);
-      const vols   = kl.map(k=>+k[5]);
       const last   = closes.at(-1);
 
       const ema9Arr   = ema(closes,9);
@@ -247,8 +285,8 @@ async function buildTable(){
       let diffTP = "-";
       let diffSL = "-";
       if(entry !== "-" && exitPlan !== "-"){
-        const tpMatch = exitPlan.match(/TP:(\d+(\.\d+)?)/);
-        const slMatch = exitPlan.match(/SL:(\d+(\.\d+)?)/);
+        const tpMatch = exitPlan.match(/TP:(\d+(?:\.\d+)?)/);
+        const slMatch = exitPlan.match(/SL:(\d+(?:\.\d+)?)/);
         if(tpMatch){
           const tpVal = parseFloat(tpMatch[1]);
           diffTP = (tpVal - parseFloat(entry)).toFixed(4);
@@ -317,5 +355,23 @@ async function buildTable(){
     }
   }
 
-  // مرتب سازی ستون Diff (Entry-TP) از بزرگ به کوچک
-  const rows = Array.from(tbody.querySelectorAll("tr"));
+  // مرتب سازی ستون Diff (Entry-TP) از بزرگ به کوچک (پس از پر شدن همه ردیف‌ها)
+  sortByDiffTP();
+
+  // نمایش زمان بروزرسانی
+  document.getElementById("lastUpdate").textContent =
+    "آخرین بروزرسانی: " + new Date().toLocaleString();
+
+  setLoading(false);
+}
+
+// ====== Wire UI ======
+document.getElementById('refreshBtn').addEventListener('click', buildTable);
+document.getElementById('interval').addEventListener('change', buildTable);
+attachSearch();
+
+// Start
+window.addEventListener('load', buildTable);
+</script>
+</body>
+</html>
